@@ -13,6 +13,20 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+//
+// ITUMOD KRNIE MOD added events
+// array(
+//         'eventname' => '\examsubmission_file\event\assessable_uploaded',
+//         'callback' => 'plagiarism_urkund_observer::examsubmission_file_uploaded'
+//     ),
+//         array(
+//         'eventname' => '\examsubmission_onlinetext\event\assessable_uploaded',
+//         'callback' => 'plagiarism_urkund_observer::examsubmission_onlinetext_uploaded'
+//     ),
+//     	array(
+//         'eventname' => '\mod_exam\event\assessable_submitted',
+//         'callback' => 'plagiarism_urkund_observer::examsubmission_submitted'
+//     )
 
 /**
  * URKUND observers.
@@ -49,7 +63,19 @@ $observers = array (
     array(
         'eventname' => '\mod_quiz\event\attempt_submitted',
         'callback' => 'plagiarism_urkund_observer::quiz_submitted'
-    )
+    ),
+	array(
+		'eventname' => '\examsubmission_file\event\assessable_uploaded',
+		'callback' => 'plagiarism_urkund_observer::examsubmission_file_uploaded'
+	),
+	array(
+		'eventname' => '\examsubmission_onlinetext\event\assessable_uploaded',
+		'callback' => 'plagiarism_urkund_observer::examsubmission_onlinetext_uploaded'
+	),
+	array(
+		'eventname' => '\mod_exam\event\assessable_submitted',
+		'callback' => 'plagiarism_urkund_observer::examsubmission_submitted'
+	)
 );
 
 global $CFG; // Not sure if global CFG is actually needed here but just in case.

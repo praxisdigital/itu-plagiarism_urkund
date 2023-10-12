@@ -108,6 +108,51 @@ class plagiarism_urkund_observer {
         }
     }
 
+	/**
+	 * ITUMOD KRNIE MOD added
+	 * Observer function to handle the assessable_uploaded event in mod_assign onlinetext.
+	 * @param \assignsubmission_onlinetext\event\assessable_uploaded $event
+	 */
+	public static function examsubmission_onlinetext_uploaded(
+		\examsubmission_onlinetext\event\assessable_uploaded $event) {
+		global $CFG;
+		require_once($CFG->dirroot . '/plagiarism/urkund/lib.php');
+		$eventdata = $event->get_data();
+		$eventdata['eventtype'] = 'examsubmission_onlinetext_uploaded';
+		$urkund = new plagiarism_plugin_urkund();
+		$urkund->event_handler($eventdata);
+	}
+
+	/**
+	 * ITUMOD KRNIE MOD
+	 * Observer function to handle the assessable_submitted event in mod_assign.
+	 * @param \mod_assign\event\assessable_submitted $event
+	 */
+	public static function examsubmission_submitted(
+		\mod_exam\event\assessable_submitted $event) {
+		global $CFG;
+		require_once($CFG->dirroot . '/plagiarism/urkund/lib.php');
+		$eventdata = $event->get_data();
+		$eventdata['eventtype'] = 'examsubmission_submitted';
+		$urkund = new plagiarism_plugin_urkund();
+		$urkund->event_handler($eventdata);
+	}
+
+	/**
+	 * ITUMOD KRNIE MOD added exam file
+	 * Observer function to handle the assessable_uploaded event in mod_exam.
+	 * @param \assignsubmission_file\event\assessable_uploaded $event
+	 */
+	public static function examsubmission_file_uploaded(
+		\examsubmission_file\event\assessable_uploaded $event) {
+		global $CFG;
+		require_once($CFG->dirroot . '/plagiarism/urkund/lib.php');
+		$eventdata = $event->get_data();
+		$eventdata['eventtype'] = 'examsubmission_file_uploaded';
+		$urkund = new plagiarism_plugin_urkund();
+		$urkund->event_handler($eventdata);
+	}
+
     /**
      * Observer function to handle the assessable_submitted event in mod_assign.
      * @param \mod_quiz\event\attempt_submitted $event

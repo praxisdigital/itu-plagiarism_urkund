@@ -659,6 +659,47 @@ class plagiarism_plugin_urkund extends plagiarism_plugin {
             }
             return $result;
         }
+
+	    // ITUMOD KRNIE MOD START added exam events
+	    if ($eventdata['eventtype'] == 'examsubmission_submitted' && empty($eventdata['other']['submission_editable'])) {
+		    // Exam-specific functionality:
+		    // This is a 'finalize' event. No files from this event itself,
+		    // but need to check if files from previous events need to be submitted for processing.
+		    $result = true;
+		    if (isset($plagiarismvalues['urkund_draft_submit']) &&
+			    $plagiarismvalues['urkund_draft_submit'] == PLAGIARISM_URKUND_DRAFTSUBMIT_FINAL) {
+			    // Any files attached to previous events were not submitted.
+			    // These files are now finalized, and should be submitted for processing.
+			    require_once("$CFG->dirroot/mod/exam/locallib.php");
+			    require_once("$CFG->dirroot/mod/exam/submission/file/locallib.php");
+
+			    $modulecontext = context_module::instance($cmid);
+
+			    if ($showfiles) { // If we should be handling files.
+				    $fs = get_file_storage();
+				    if ($files = $fs->get_area_files($modulecontext->id, 'examsubmission_file',
+					    ASSIGNSUBMISSION_FILE_FILEAREA, $eventdata['objectid'], "id", false)) {
+					    foreach ($files as $file) {
+						    urkund_queue_file($cmid, $userid, $file, $relateduserid);
+					    }
+				    }
+			    }
+
+			    if ($showcontent) { // If we should be handling in-line text.
+				    $submission = $DB->get_record('examsubmission_onlinetext', array('submission' => $eventdata['objectid']));
+				    if (!empty($submission) && str_word_count($submission->onlinetext) > $wordcount) {
+					    $content = trim(format_text($submission->onlinetext, $submission->onlineformat,
+						    array('context' => $modulecontext)));
+					    $file = urkund_create_temp_file($cmid, $eventdata['courseid'], $userid, $content);
+					    urkund_queue_file($cmid, $userid, $file, $relateduserid);
+				    }
+			    }
+		    }
+		    return $result;
+	    }
+
+	    // ITUMOD KRNIE MOD END
+
         if ($eventdata['eventtype'] == 'quiz_submitted') {
             $result = true;
 
@@ -2036,7 +2077,54 @@ function plagiarism_urkund_get_file_object($plagiarismfile) {
                 return $file;
             }
 
-        } else if ($cm->modname == 'workshop') {
+        }
+        else if ($cm->modname == 'exam') // ITUMOD KRNIE MOD START
+        {
+	        if (debugging()) {
+		        mtrace("URKUND fileid:" . $plagiarismfile->id . " exam found");
+	        }
+	        require_once($CFG->dirroot . '/mod/exam/locallib.php');
+	        $exam = new exam($modulecontext, null, null);
+
+	        if ($exam->get_instance()->teamsubmission) {
+		        $submission = $exam->get_group_submission($userid, 0, false);
+	        } else {
+		        $submission = $exam->get_user_submission($userid, false);
+	        }
+	        $submissionplugins = $exam->get_submission_plugins();
+
+	        foreach ($submissionplugins as $submissionplugin) {
+		        $component = $submissionplugin->get_subtype() . '_' . $submissionplugin->get_type();
+		        $fileareas = $submissionplugin->get_file_areas();
+		        foreach ($fileareas as $filearea => $name) {
+			        if (debugging()) {
+				        mtrace("URKUND fileid:" . $plagiarismfile->id . " Check component:" . $component . " Filearea:" .
+					        $filearea . " Submission" . $submission->id);
+			        }
+			        $files = $fs->get_area_files(
+				        $exam->get_context()->id,
+				        $component,
+				        $filearea,
+				        $submission->id,
+				        "timemodified",
+				        false
+			        );
+
+			        foreach ($files as $file) {
+				        if (debugging()) {
+					        mtrace("URKUND fileid:" . $plagiarismfile->id . " check fileid:" . $file->get_id());
+				        }
+				        if ($file->get_contenthash() == $plagiarismfile->identifier) {
+					        if (debugging()) {
+						        mtrace("URKUND fileid:" . $plagiarismfile->id . " found fileid:" . $file->get_id());
+					        }
+					        return $file;
+				        }
+			        }
+		        }
+	        }
+        } // ITUMOD KRNIE MOD END
+		else if ($cm->modname == 'workshop') {
             require_once($CFG->dirroot . '/mod/workshop/locallib.php');
             $workshop = $DB->get_record('workshop', array('id' => $cm->instance), '*', MUST_EXIST);
             $course = $DB->get_record('course', array('id' => $cm->course), '*', MUST_EXIST);
